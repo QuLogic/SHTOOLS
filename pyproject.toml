@@ -55,3 +55,7 @@ requires = [
   'meson-python>=0.13.1',
   'oldest-supported-numpy',
 ]
+
+[tool.meson-python.args]
+setup = ['--default-library=static']
+install = ['--tags=runtime,python-runtime']
