@@ -23,3 +23,5 @@ endif
 subdir('src')
 subdir('pyshtools')
 subdir('examples')
+
+alias_target('doc', pyshtools_docs)

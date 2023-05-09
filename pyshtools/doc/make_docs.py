@@ -1,24 +1,27 @@
+#!/usr/bin/env python3
 """
 This script builds the python documentation from the function signature and the
 customized markdown files. The processed documentation is saved as ascii text
 files which are loaded on runtime and replace the __doc__ string of the f2py
 wrapped functions.
 """
-import sys
-import os
+import importlib.util
+from pathlib import Path
 import re
+import sys
 import textwrap
 
 
 def main():
     # ---- input/output folders ----
-    pydocfolder = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.path.join(pydocfolder, '..'))
-    import _SHTOOLS  # noqa: E402
+    pydocfolder = Path(__file__).parent.resolve()
 
-    mddocfolder = os.path.join(pydocfolder, '../../src/pydoc')
+    spec = importlib.util.spec_from_file_location("_SHTOOLS", sys.argv[1])
+    _SHTOOLS = importlib.util.module_from_spec(spec)  # noqa
+
+    mddocfolder = pydocfolder / '../../src/pydoc'
     print('--> Building python doc strings')
-    print('searching documentation in folder: {} --'.format(mddocfolder))
+    print(f'-- searching documentation in folder: {mddocfolder} --')
 
     # ---- loop through the f2py _SHTOOLS functions and make docstrings ----
     for name, func in _SHTOOLS.__dict__.items():
@@ -26,15 +29,12 @@ def main():
             try:
                 # ---- process and load documentation ----
                 # ---- read md file documentation: ----
-                fname_mddoc = os.path.join(mddocfolder, 'py' +
-                                           name.lower() + '.md')
-                if (os.path.isfile(fname_mddoc)):
+                fname_mddoc = mddocfolder / f'py{name.lower()}.md'
+                if fname_mddoc.exists():
                     docstring = process_mddoc(fname_mddoc)
                     # ---- save combined docstring in the pydoc folder ----
-                    fname_pydoc = os.path.join(pydocfolder, name.lower() +
-                                               '.doc')
-                    with open(fname_pydoc, 'w') as pydocfile:
-                        pydocfile.write(docstring)
+                    fname_pydoc = pydocfolder / f'{name.lower()}.doc'
+                    fname_pydoc.write_text(docstring)
 
             except IOError as msg:
                 print(msg)
@@ -45,18 +45,14 @@ def main():
         try:
             # ---- process and load documentation
             # read md file documentation:
-            fname_mddoc = os.path.join(mddocfolder, 'py' + name.lower() +
-                                       '.md')
+            fname_mddoc = mddocfolder / f'py{name.lower()}.md'
             docstring = process_mddoc(fname_mddoc)
             # ---- save combined docstring in the pydoc folder--
-            fname_pydoc = os.path.join(pydocfolder, name.lower() + '.doc')
-            with open(fname_pydoc, 'w') as pydocfile:
-                pydocfile.write(docstring)
+            fname_pydoc = pydocfolder / f'{name.lower()}.doc'
+            fname_pydoc.write_text(docstring)
 
         except IOError as msg:
             print(msg)
-
-    print('python doc strings created successfully')
 
 
 # ===== PROCESS MD DOCUMENTATION FILE ====
@@ -74,9 +70,8 @@ def process_mddoc(fname_mddoc):
     # rebold = re.compile(r'(?![\])[*](.*?)(?![\])[*]',re.DOTALL)
 
     # ---- open md file and search for patterns ----
-    with open(fname_mddoc, 'r') as mdfile:
-        # remove the first two lines
-        mdstring = mdfile.read().split('\n', 2)[2]
+    # remove the first two lines
+    mdstring = fname_mddoc.read_text().split('\n', 2)[2]
 
     # First, remove '## Value\n\n' from constant documentation
     match = revalue.search(mdstring)

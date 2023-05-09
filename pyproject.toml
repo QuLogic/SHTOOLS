@@ -58,4 +58,4 @@ requires = [
 
 [tool.meson-python.args]
 setup = ['--default-library=static']
-install = ['--tags=runtime,python-runtime']
+install = ['--tags=runtime,python-runtime,doc']
