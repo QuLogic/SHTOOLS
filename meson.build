@@ -15,7 +15,7 @@ else
 endif
 lapack = get_option('lapack')
 if lapack == ''
-  lapack = dependency('lapack')
+  lapack = dependency('lapack', 'LAPACK')
 else
   lapack = dependency(lapack)
 endif
